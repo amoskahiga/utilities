@@ -1,0 +1,6 @@
+This repository contains a simple real-time plotting application. It samples data from a file or pipe and plots it in real-time.
+
+It currently only supports plotting of digital values [0 or 1], where each bit in a sampled byte is evaluated as a sample point.
+
+Homepage: <http://github.com/amoskahiga/DigiPlot>
+Author: Amos Kariuki <amoskahiga@gmail.com> 

@@ -6,6 +6,7 @@
 #include <QDataStream>
 #include <QFile>
 #include <QMainWindow>
+#include <QMutex>
 #include <QTimer>
 
 #include "SampleThread.h"
@@ -34,6 +35,7 @@ private:
     QTimer m_timer;
     boost::circular_buffer<char> m_buffer;
     SampleThread m_sampleThread;
+    QMutex m_mutex;
 
     QMenu* m_fileMenu;
     QMenu* m_toolsMenu;

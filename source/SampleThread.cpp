@@ -4,13 +4,14 @@
  * Constructor
  *
  * @param buffer that stores the sampled data
- * @param file to sample from
+ * @param mutex object used to synchronize rea/write access
  */
-SampleThread::SampleThread(boost::circular_buffer<char>& buffer, QObject *parent) :
+SampleThread::SampleThread(boost::circular_buffer<char>& buffer, QMutex& mutex, QObject *parent) :
     QThread(parent),
     m_buffer(buffer),
     m_file(0),
-    m_stopped(true)
+    m_stopped(true),
+    m_mutex(mutex)
 {
 }
 
@@ -31,7 +32,9 @@ void SampleThread::run(){
     while(!m_stopped)
     {
         if ((c = fgetc(m_file)) != EOF) {
+            m_mutex.lock();
             m_buffer.push_back(c);
+            m_mutex.unlock();
         }
     }
 }

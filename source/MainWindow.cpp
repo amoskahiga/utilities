@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow),
     m_plotObject(0),
     m_file(0),
-    m_sampleThread(m_buffer, this)
+    m_sampleThread(m_buffer, m_mutex, this)
 {
     ui->setupUi(this);
     createActions();
@@ -164,7 +164,7 @@ void MainWindow::about()
 }
 
 /**
- * Read the available data from the internal buffer and plot it
+ * Read the available data from the shared buffer and plot it. Access to the buffer is synchronized with a mutex.
  */
 void MainWindow::sampleAndUpdate()
 {
@@ -175,10 +175,12 @@ void MainWindow::sampleAndUpdate()
         // char* buffer = m_buffer.linearize();
         char tempBuffer[size];
         // Add the points in reserve order to correct data insertion to time order
+        m_mutex.lock();
         for (int i = size; i; --i) {
             tempBuffer[i] = m_buffer[0];
             m_buffer.pop_front();
         }
+        m_mutex.unlock();
 
         // Add the data to our plot
         QBitArray bits = Utility::toBits(tempBuffer, size);

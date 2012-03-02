@@ -10,6 +10,8 @@
 *.exe
 *.o
 *.so
+release/
+debug/
 
 # Packages #
 ############

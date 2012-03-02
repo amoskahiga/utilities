@@ -3,17 +3,18 @@
 
 #include <cstdio>
 #include <boost/circular_buffer.hpp>
+#include <QMutex>
 #include <QThread>
 
 /**
  * Class to sample data from a file stream and store it in a supplied buffer.
- * NOTE: The boost::circular_buffer that is used is not thread safe and care must be taken when using this class.
+ * NOTE: The boost::circular_buffer that is used is not thread safe; the supplied mutex is used to control access.
  */
 class SampleThread : public QThread
 {
     Q_OBJECT
 public:
-    SampleThread(boost::circular_buffer<char>& buffer, QObject *parent = 0);
+    SampleThread(boost::circular_buffer<char>& buffer, QMutex& mutex, QObject *parent = 0);
     void setFile(FILE* file);
     void stop();
 
@@ -24,6 +25,7 @@ private:
     boost::circular_buffer<char>& m_buffer;
     FILE* m_file;
     bool m_stopped;
+    QMutex& m_mutex;
 };
 
 #endif // SAMPLETHREAD_H

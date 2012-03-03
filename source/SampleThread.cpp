@@ -32,7 +32,7 @@ void SampleThread::run(){
     while(!m_stopped)
     {
         // Sample data continously while it's available
-        while ((c = fgetc(m_file)) != EOF) {
+        while ((c = fgetc(m_file)) != EOF && !m_stopped) {
             m_mutex.lock();
             m_buffer.push_back(static_cast<unsigned char>(c));
             m_mutex.unlock();

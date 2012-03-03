@@ -2,7 +2,6 @@
 #define MAINWINDOW_H
 
 #include <boost/circular_buffer.hpp>
-#include <kplotobject.h>
 #include <QDataStream>
 #include <QFile>
 #include <QMainWindow>
@@ -15,6 +14,8 @@
 namespace Ui {
     class MainWindow;
 }
+
+class DataPlot;
 
 /**
  * Main DigiPlot application window that contains the GUI plot
@@ -29,13 +30,13 @@ public:
 
 private:
     Ui::MainWindow* ui;
-    KPlotObject* m_plotObject;
     Settings m_settings;
     FILE* m_file;
     QTimer m_timer;
     boost::circular_buffer<unsigned char> m_buffer;
     SampleThread m_sampleThread;
     QMutex m_mutex;
+    DataPlot* m_plot;
 
     QMenu* m_fileMenu;
     QMenu* m_toolsMenu;
@@ -50,12 +51,10 @@ private:
 
     void createActions();
     void createMenus();
-    void initializePlot();
 
 private slots:
     void about();
     void open();
-    void plotPoints(const QBitArray& data);
     void sampleAndUpdate();
 };
 

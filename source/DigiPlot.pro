@@ -14,17 +14,21 @@ SOURCES +=  main.cpp\
             MainWindow.cpp \
     Settings.cpp \
     Utility.cpp \
-    SampleThread.cpp
+    SampleThread.cpp \
+    DataPlot.cpp
 
 HEADERS +=  MainWindow.h \
     Settings.h \
     Utility.h \
-    SampleThread.h
+    SampleThread.h \
+    DataPlot.h
 
 FORMS   +=  MainWindow.ui
 
 LIBS    +=  -lkdecore \
-            -lkdeui
+            -lqwt
+
+
 
 
 

@@ -1,10 +1,8 @@
-#include <kplotaxis.h>
-#include <kplotobject.h>
-#include <kplotpoint.h>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QMessageBox>
 
+#include "DataPlot.h"
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 #include "Utility.h"
@@ -15,16 +13,20 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    m_plotObject(0),
     m_file(0),
-    m_sampleThread(m_buffer, m_mutex, this)
+    m_sampleThread(m_buffer, m_mutex, this),
+    m_plot(0)
 {
     ui->setupUi(this);
     createActions();
     createMenus();
 
     m_settings.loadDefault();
-    initializePlot();
+
+    m_plot = new DataPlot(this);
+    setCentralWidget(m_plot);
+    m_plot->setMinimumSize(400, 400);
+    m_plot->initialize(m_settings);
 
     m_timer.setInterval(100);
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(sampleAndUpdate()));
@@ -90,43 +92,6 @@ void MainWindow::createMenus()
 }
 
 /**
- * Setup the GUI plot's settings: axis scale ranges, labels, colors etc
- */
-void MainWindow::initializePlot()
-{
-    // Create a new KPlotWidget, provide a minimum size, and activate antialiased drawing:
-    ui->kplotwidget->setMinimumSize(400, 400);
-    ui->kplotwidget->setAntialiasing( true );
-
-    // Set the boundaries of the plot to display the full extent of the sine curve:
-    ui->kplotwidget->setLimits(m_settings.xMin, m_settings.xMax, m_settings.yMin, m_settings.yMax);
-
-    // Create a KPlotObject to display data points by connecting them with red line segments and a width of 2 pixels
-    m_plotObject = new KPlotObject(Qt::red, KPlotObject::Lines, 2);
-
-    // Add initial data points to the KPlotObject
-    const double interval = 1 / ((m_settings.xMax - m_settings.xMin) * m_settings.sampleRate);
-    for (double i = m_settings.xMin; i < m_settings.xMax; i += interval) {
-        m_plotObject->addPoint(i, 0);
-    }
-
-    // Add the KPlotObject to the plot:
-    ui->kplotwidget->addPlotObject(m_plotObject);
-
-    // Add a text label to the bottom axis:
-    ui->kplotwidget->axis(KPlotWidget::BottomAxis)->setLabel("Time (sec)");
-    ui->kplotwidget->axis(KPlotWidget::LeftAxis)->setLabel("Magnitude");
-
-    //ui->kplotwidget->setBackgroundColor(QColor("white"));
-    //ui->kplotwidget->setForegroundColor(QColor("black"));
-    //ui->kplotwidget->setGridColor(QColor("black"));
-
-    ui->kplotwidget->setShowGrid(true);
-
-    ui->kplotwidget->update();
-}
-
-/**
  * Open the dialog to allow the user to specify the sample file. If a valid file is selected, start sampling it.
  */
 void MainWindow::open()
@@ -184,34 +149,6 @@ void MainWindow::sampleAndUpdate()
 
         // Add the data to our plot
         QBitArray bits = Utility::toBits(tempBuffer, size);
-        plotPoints(bits);
-
-        ui->kplotwidget->update();  // Refresh the plot
-    }
-}
-
-/**
- * Plot the data bits to the plot/chart. Existing points are shifted foward by the amount of data available.
- *
- * @param data to add; we assume the bits represent values of either 1 or 0, and that the oldest data point is at [0]
- */
-void MainWindow::plotPoints(const QBitArray& data)
-{
-    // Advance all the current points by the amount to be copied
-    QList<KPlotPoint*> points = m_plotObject->points();
-    const int pointsToAdd = std::min(data.size(), points.size());
-
-    // If we have points to shift, move them
-    if (pointsToAdd < points.size()) {
-        for (int i = points.size(); i > pointsToAdd; --i) {
-            KPlotPoint* newPoint = points[i - 1];
-            KPlotPoint* oldPoint = points[i - pointsToAdd - 1];
-            newPoint->setY(oldPoint->y());
-        }
-    }
-
-    // Add new points to plot
-    for (int i = 0; i < pointsToAdd; ++i) {
-        points[i]->setY(data[i]);
+        m_plot->addPoints(bits);
     }
 }

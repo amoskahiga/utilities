@@ -33,7 +33,7 @@ private:
     Settings m_settings;
     FILE* m_file;
     QTimer m_timer;
-    boost::circular_buffer<char> m_buffer;
+    boost::circular_buffer<unsigned char> m_buffer;
     SampleThread m_sampleThread;
     QMutex m_mutex;
 

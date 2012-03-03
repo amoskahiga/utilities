@@ -6,7 +6,7 @@
  * @param buffer that stores the sampled data
  * @param mutex object used to synchronize rea/write access
  */
-SampleThread::SampleThread(boost::circular_buffer<char>& buffer, QMutex& mutex, QObject *parent) :
+SampleThread::SampleThread(boost::circular_buffer<unsigned char>& buffer, QMutex& mutex, QObject *parent) :
     QThread(parent),
     m_buffer(buffer),
     m_file(0),
@@ -31,11 +31,15 @@ void SampleThread::run(){
     int c = 0;  // Note: This need to be bigger than a char so that we can differentiate 0xFF from EOF (-1)
     while(!m_stopped)
     {
-        if ((c = fgetc(m_file)) != EOF) {
+        // Sample data continously while it's available
+        while ((c = fgetc(m_file)) != EOF) {
             m_mutex.lock();
-            m_buffer.push_back(c);
+            m_buffer.push_back(static_cast<unsigned char>(c));
             m_mutex.unlock();
         }
+
+        // Wait a little for new data to arrive. We sleep to avoid hoarding the CPU unneccessarily.
+        sleep(1);
     }
 }
 

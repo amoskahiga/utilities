@@ -176,7 +176,7 @@ void MainWindow::sampleAndUpdate()
         char tempBuffer[size];
         // Add the points in reserve order to correct data insertion to time order
         m_mutex.lock();
-        for (int i = size; i; --i) {
+        for (int i = size - 1; i >= 0; --i) {
             tempBuffer[i] = m_buffer[0];
             m_buffer.pop_front();
         }

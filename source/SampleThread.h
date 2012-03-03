@@ -14,7 +14,7 @@ class SampleThread : public QThread
 {
     Q_OBJECT
 public:
-    SampleThread(boost::circular_buffer<char>& buffer, QMutex& mutex, QObject *parent = 0);
+    SampleThread(boost::circular_buffer<unsigned char>& buffer, QMutex& mutex, QObject *parent = 0);
     void setFile(FILE* file);
     void stop();
 
@@ -22,7 +22,7 @@ protected:
     void run();
 
 private:
-    boost::circular_buffer<char>& m_buffer;
+    boost::circular_buffer<unsigned char>& m_buffer;
     FILE* m_file;
     bool m_stopped;
     QMutex& m_mutex;

@@ -43,11 +43,12 @@ private:
     QMenu* m_helpMenu;
     //QToolBar* fileToolBar;
     //QToolBar* toolsToolBar;
-    QAction* openAct;
-    //QAction* saveAct;
-    QAction* exitAct;
-    QAction* aboutAct;
-    QAction* aboutQtAct;
+    QAction* m_openAct;
+    //QAction* m_saveAct;
+    QAction* m_exitAct;
+    QAction* m_configureAct;
+    QAction* m_aboutAct;
+    QAction* m_aboutQtAct;
 
     void createActions();
     void createMenus();
@@ -55,6 +56,7 @@ private:
 private slots:
     void about();
     void open();
+    void configure();
     void sampleAndUpdate();
 };
 

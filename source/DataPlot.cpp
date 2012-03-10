@@ -1,12 +1,17 @@
 #include <qwt5/qwt_painter.h>
 #include <qwt5/qwt_plot_canvas.h>
 #include <qwt5/qwt_plot_curve.h>
+#include <qwt5/qwt_plot_grid.h>
+#include <qwt5/qwt_plot_zoomer.h>
+#include <qwt5/qwt_plot_panner.h>
 #include <qwt5/qwt_scale_widget.h>
 
 #include "DataPlot.h"
+#include "Settings.h"
 
 DataPlot::DataPlot(QWidget *parent) :
-    QwtPlot(parent)
+    QwtPlot(parent),
+    m_curve(new QwtPlotCurve)
 {
 }
 
@@ -31,32 +36,30 @@ void DataPlot::initialize(const Settings& settings)
     setTitle("Data Plot");
 
     // Insert new curve
-    QwtPlotCurve* curve = new QwtPlotCurve();
-    curve->attach(this);
+    m_curve->attach(this);
 
     // Set curve style
-    curve->setPen(QPen(Qt::red, 1));
-    curve->setRenderHint(QwtPlotItem::RenderAntialiased);
+    m_curve->setPen(QPen(Qt::red, 1));
+    m_curve->setRenderHint(QwtPlotItem::RenderAntialiased);
+    m_curve->setStyle(QwtPlotCurve::Steps);
 
-    // Add initial data points to the KPlotObject
-    const double interval = 1 / ((settings.xMax - settings.xMin) * settings.sampleRate);
-    for (double i = settings.xMin; i < settings.xMax; i += interval) {
-        m_xPoints.append(i);
-        m_yPoints.append(0);
-    }
-    curve->setRawData(m_xPoints.data(), m_yPoints.data(), m_xPoints.size());
+    setSettings(settings);
 
-    // Axis
-    setAxisTitle(QwtPlot::xBottom, "Time (sec)");
-    setAxisScale(QwtPlot::xBottom, settings.xMin, settings.xMax);
+    // Add grid
+    QwtPlotGrid *grid = new QwtPlotGrid;
+    grid->enableXMin(true);
+    grid->setMajPen(QPen(Qt::white, 0, Qt::DotLine));
+    grid->setMinPen(QPen(Qt::gray, 0 , Qt::DotLine));
+    grid->attach(this);
 
-    setAxisTitle(QwtPlot::yLeft, "Values");
-    setAxisScale(QwtPlot::yLeft, settings.yMin, settings.yMax);
+    QwtPlotZoomer* zoomer = new QwtPlotZoomer(canvas());
+    Q_UNUSED(zoomer);
+    //zoomer->setMousePattern(QwtEventPattern::MouseSelect2, Qt::RightButton, Qt::ControlModifier);
+    //zoomer->setMousePattern(QwtEventPattern::MouseSelect3, Qt::RightButton);
 
-    // Add the curve to the plot:
-    curve->attach(this);
-
-    //ui->kplotwidget->setShowGrid(true);
+    QwtPlotPanner *panner = new QwtPlotPanner(canvas());
+    //panner->setAxisEnabled(QwtPlot::yRight, false);
+    panner->setMouseButton(Qt::RightButton);
 
     replot();
 }
@@ -83,6 +86,27 @@ void DataPlot::alignScales()
         if ( scaleDraw )
             scaleDraw->enableComponent(QwtAbstractScaleDraw::Backbone, false);
     }
+}
+
+void DataPlot::setSettings(const Settings& settings)
+{
+    // Add axis
+    setAxisTitle(QwtPlot::xBottom, "Time (sec)");
+    setAxisScale(QwtPlot::xBottom, settings.xMin, settings.xMax);
+    setAxisTitle(QwtPlot::yLeft, "Values");
+    setAxisScale(QwtPlot::yLeft, settings.yMin, settings.yMax);
+
+    // Add initial data points
+    m_xPoints.clear();
+    m_yPoints.clear();
+    const double interval = 1 / ((settings.xMax - settings.xMin) * settings.sampleRate);
+    for (double i = settings.xMin; i < settings.xMax; i += interval) {
+        m_xPoints.append(i);
+        m_yPoints.append(0);
+    }
+    m_curve->setRawData(m_xPoints.data(), m_yPoints.data(), m_xPoints.size());
+
+    replot();
 }
 
 /**

@@ -29,7 +29,7 @@ void Settings::loadDefault()
     xMax = plotGroup.readEntry("xMax", 1);
     yMin = plotGroup.readEntry("yMin", -0.5);
     yMax = plotGroup.readEntry("yMax", 1.2);
-    sampleRate = plotGroup.readEntry("sampleRate", 1000);
+    sampleRate = plotGroup.readEntry("sampleRate", 14400);
 }
 
 /**

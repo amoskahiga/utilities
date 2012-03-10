@@ -16,7 +16,8 @@ QBitArray Utility::toBits(const char* input, size_t size)
         unsigned int offset = i * byteSize;
 
         for (unsigned int j = 0; j < byteSize; ++j) {
-            bits[offset + j] = (c & (1 << j)) >> j;
+            volatile int i = (c >> (byteSize - 1 - j)) & 1;
+            bits[offset + j] = (c >> (byteSize - 1 - j)) & 1;
         }
     }
     return bits;

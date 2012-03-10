@@ -5,6 +5,7 @@
 #include "DataPlot.h"
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
+#include "SettingsDialog.h"
 #include "Utility.h"
 
 /**
@@ -56,23 +57,27 @@ MainWindow::~MainWindow()
  */
 void MainWindow::createActions()
 {
-    openAct = new QAction(QIcon(":/images/open.png"), tr("&Open..."), this);
-    openAct->setShortcuts(QKeySequence::Open);
-    openAct->setStatusTip(tr("Open an existing file"));
-    connect(openAct, SIGNAL(triggered()), this, SLOT(open()));
+    m_openAct = new QAction(QIcon(":/images/open.png"), tr("&Open..."), this);
+    m_openAct->setShortcuts(QKeySequence::Open);
+    m_openAct->setStatusTip(tr("Open an existing file"));
+    connect(m_openAct, SIGNAL(triggered()), this, SLOT(open()));
 
-    aboutAct = new QAction(tr("&About"), this);
-    aboutAct->setStatusTip(tr("Show the application's About box"));
-    connect(aboutAct, SIGNAL(triggered()), this, SLOT(about()));
+    m_configureAct = new QAction("&Configure DigiPlot...", this);
+    m_configureAct->setStatusTip(tr("Configure the application's settings"));
+    connect(m_configureAct, SIGNAL(triggered()), this, SLOT(configure()));
 
-    aboutQtAct = new QAction(tr("About &Qt"), this);
-    aboutQtAct->setStatusTip(tr("Show the Qt library's About box"));
-    connect(aboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
+    m_aboutAct = new QAction("&About", this);
+    m_aboutAct->setStatusTip("Show the application's About box");
+    connect(m_aboutAct, SIGNAL(triggered()), this, SLOT(about()));
 
-    exitAct = new QAction(tr("E&xit"), this);
-    exitAct->setShortcuts(QKeySequence::Quit);
-    exitAct->setStatusTip(tr("Exit the application"));
-    connect(exitAct, SIGNAL(triggered()), this, SLOT(close()));
+    m_aboutQtAct = new QAction("About &Qt", this);
+    m_aboutQtAct->setStatusTip("Show the Qt library's About box");
+    connect(m_aboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
+
+    m_exitAct = new QAction("E&xit", this);
+    m_exitAct->setShortcuts(QKeySequence::Quit);
+    m_exitAct->setStatusTip("Exit the application");
+    connect(m_exitAct, SIGNAL(triggered()), this, SLOT(close()));
 }
 
 /**
@@ -81,14 +86,15 @@ void MainWindow::createActions()
 void MainWindow::createMenus()
 {
     m_fileMenu = menuBar()->addMenu(tr("&File"));
-    m_fileMenu->addAction(openAct);
-    m_fileMenu->addAction(exitAct);
+    m_fileMenu->addAction(m_openAct);
+    m_fileMenu->addAction(m_exitAct);
 
-    menuBar()->addSeparator();
+    m_toolsMenu = menuBar()->addMenu(tr("&Settings"));
+    m_toolsMenu->addAction(m_configureAct);
 
     m_helpMenu = menuBar()->addMenu(tr("&Help"));
-    m_helpMenu->addAction(aboutAct);
-    m_helpMenu->addAction(aboutQtAct);
+    m_helpMenu->addAction(m_aboutAct);
+    m_helpMenu->addAction(m_aboutQtAct);
 }
 
 /**
@@ -120,6 +126,20 @@ void MainWindow::open()
 }
 
 /**
+ * Open the configuration dialog with the current settings, allowing the user to modify and persist them
+ */
+void MainWindow::configure()
+{
+    SettingsDialog settingsDialog;
+    settingsDialog.setSettings(m_settings);
+    if (settingsDialog.exec() == QDialog::Accepted) {
+        settingsDialog.getSettings(m_settings);
+        m_plot->setSettings(m_settings);
+    }
+}
+
+
+/**
  * Display the about dialog
  */
 void MainWindow::about()
@@ -139,9 +159,8 @@ void MainWindow::sampleAndUpdate()
         const size_t size = m_buffer.size();
         // char* buffer = m_buffer.linearize();
         char tempBuffer[size];
-        // Add the points in reserve order to correct data insertion to time order
         m_mutex.lock();
-        for (int i = size - 1; i >= 0; --i) {
+        for (size_t i = 0; i < size; ++i) {
             tempBuffer[i] = m_buffer[0];
             m_buffer.pop_front();
         }

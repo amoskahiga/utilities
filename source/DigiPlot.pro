@@ -15,18 +15,24 @@ SOURCES +=  main.cpp\
     Settings.cpp \
     Utility.cpp \
     SampleThread.cpp \
-    DataPlot.cpp
+    DataPlot.cpp \
+    SettingsDialog.cpp
 
 HEADERS +=  MainWindow.h \
     Settings.h \
     Utility.h \
     SampleThread.h \
-    DataPlot.h
+    DataPlot.h \
+    SettingsDialog.h
 
-FORMS   +=  MainWindow.ui
+FORMS   +=  MainWindow.ui \
+    SettingsDialog.ui
 
 LIBS    +=  -lkdecore \
             -lqwt
+
+
+
 
 
 

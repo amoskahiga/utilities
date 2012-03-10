@@ -14,7 +14,7 @@ public:
     double xMax;
     double yMin;
     double yMax;
-    unsigned int sampleRate;
+    double sampleRate;
 
     Settings();
     void loadDefault();

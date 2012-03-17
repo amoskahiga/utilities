@@ -57,10 +57,20 @@ MainWindow::~MainWindow()
  */
 void MainWindow::createActions()
 {
-    m_openAct = new QAction(QIcon(":/images/open.png"), tr("&Open..."), this);
+    m_openAct = new QAction(QIcon(":/images/open.png"), "&Open...", this);
     m_openAct->setShortcuts(QKeySequence::Open);
     m_openAct->setStatusTip(tr("Open an existing file"));
     connect(m_openAct, SIGNAL(triggered()), this, SLOT(open()));
+
+    m_saveAct = new QAction("&Save", this);
+    m_saveAct->setShortcuts(QKeySequence::Save);
+    m_saveAct->setStatusTip(tr("Save to current file"));
+    connect(m_saveAct, SIGNAL(triggered()), this, SLOT(save()));
+
+    m_saveAsAct = new QAction("&Save As...", this);
+    m_saveAsAct->setShortcuts(QKeySequence::SaveAs);
+    m_saveAsAct->setStatusTip(tr("Save to specified file"));
+    connect(m_saveAsAct, SIGNAL(triggered()), this, SLOT(saveAs()));
 
     m_configureAct = new QAction("&Configure DigiPlot...", this);
     m_configureAct->setStatusTip(tr("Configure the application's settings"));
@@ -87,6 +97,8 @@ void MainWindow::createMenus()
 {
     m_fileMenu = menuBar()->addMenu(tr("&File"));
     m_fileMenu->addAction(m_openAct);
+    m_fileMenu->addAction(m_saveAct);
+    m_fileMenu->addAction(m_saveAsAct);
     m_fileMenu->addAction(m_exitAct);
 
     m_toolsMenu = menuBar()->addMenu(tr("&Settings"));
@@ -98,7 +110,7 @@ void MainWindow::createMenus()
 }
 
 /**
- * Open the dialog to allow the user to specify the sample file. If a valid file is selected, start sampling it.
+ * Open a dialog to allow the user to specify the sample file. If a valid file is selected, start sampling it.
  */
 void MainWindow::open()
 {
@@ -120,8 +132,40 @@ void MainWindow::open()
         QFileInfo fileInfo(fileName);
         m_settings.recentPath = fileInfo.filePath();
 
+        // Reset the current view
+        m_plot->setSettings(m_settings);
+
         m_sampleThread.setFile(m_file);
         m_sampleThread.start();
+    }
+}
+
+/**
+ * Open a dialog to allow the user to specify a file to save the currently displayed samples to. If a valid file is
+ * selected, save the samples to it.
+ */
+void MainWindow::saveAs()
+{
+    QString fileName = QFileDialog::getSaveFileName(this, "Open File", m_settings.recentPath);
+    if (!fileName.isEmpty()) {
+
+        QFile file(fileName);
+        if (!file.open(QIODevice::WriteOnly))
+        {
+            QMessageBox::warning(this, "Application", "Cannot read file: " + fileName);
+            return;
+        }
+
+        QVector<QPointF> points = m_plot->getDisplayedPoints();
+        QVector<double> yPoints = Utility::getYValues(points);
+        QBitArray bits = Utility::toBits(yPoints);
+        QVector<char> chars = Utility::toChars(bits);
+
+        // Save the chars to file
+        QDataStream outStream(&file);
+        outStream.writeRawData(chars.data(), chars.size());
+
+        statusBar()->showMessage("File saved", 2000);
     }
 }
 

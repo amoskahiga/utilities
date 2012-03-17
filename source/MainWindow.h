@@ -44,7 +44,8 @@ private:
     //QToolBar* fileToolBar;
     //QToolBar* toolsToolBar;
     QAction* m_openAct;
-    //QAction* m_saveAct;
+    QAction* m_saveAct;
+    QAction* m_saveAsAct;
     QAction* m_exitAct;
     QAction* m_configureAct;
     QAction* m_aboutAct;
@@ -58,6 +59,7 @@ private slots:
     void open();
     void configure();
     void sampleAndUpdate();
+    void saveAs();
 };
 
 #endif // MAINWINDOW_H

@@ -1,3 +1,4 @@
+#include <QDebug>
 #include <qwt5/qwt_painter.h>
 #include <qwt5/qwt_plot_canvas.h>
 #include <qwt5/qwt_plot_curve.h>
@@ -9,12 +10,15 @@
 #include "DataPlot.h"
 #include "Settings.h"
 
+/**
+ * Constructor
+ */
 DataPlot::DataPlot(QWidget *parent) :
     QwtPlot(parent),
-    m_curve(new QwtPlotCurve)
+    m_curve(new QwtPlotCurve),
+    m_zoomer(new QwtPlotZoomer(canvas()))
 {
 }
-
 
 /**
  * Setup the GUI plot's settings: axis scale ranges, labels, colors etc
@@ -52,10 +56,10 @@ void DataPlot::initialize(const Settings& settings)
     grid->setMinPen(QPen(Qt::gray, 0 , Qt::DotLine));
     grid->attach(this);
 
-    QwtPlotZoomer* zoomer = new QwtPlotZoomer(canvas());
-    Q_UNUSED(zoomer);
-    //zoomer->setMousePattern(QwtEventPattern::MouseSelect2, Qt::RightButton, Qt::ControlModifier);
-    //zoomer->setMousePattern(QwtEventPattern::MouseSelect3, Qt::RightButton);
+    // Set up zoomer
+    m_zoomer->setZoomBase(true);
+    //m_zoomer->setMousePattern(QwtEventPattern::MouseSelect2, Qt::RightButton, Qt::ControlModifier);
+    //m_zoomer->setMousePattern(QwtEventPattern::MouseSelect3, Qt::RightButton);
 
     QwtPlotPanner *panner = new QwtPlotPanner(canvas());
     //panner->setAxisEnabled(QwtPlot::yRight, false);
@@ -88,6 +92,16 @@ void DataPlot::alignScales()
     }
 }
 
+/**
+ * Fill all y-values with the specified value
+ *
+ * @param value to sey all y-values to: 0 by default
+ */
+void DataPlot::fill(double value)
+{
+    m_yPoints.fill(value);
+}
+
 void DataPlot::setSettings(const Settings& settings)
 {
     // Add axis
@@ -99,12 +113,15 @@ void DataPlot::setSettings(const Settings& settings)
     // Add initial data points
     m_xPoints.clear();
     m_yPoints.clear();
-    const double interval = 1 / ((settings.xMax - settings.xMin) * settings.sampleRate);
+    const double interval = 1 / settings.sampleRate;
     for (double i = settings.xMin; i < settings.xMax; i += interval) {
         m_xPoints.append(i);
         m_yPoints.append(0);
     }
     m_curve->setRawData(m_xPoints.data(), m_yPoints.data(), m_xPoints.size());
+
+    // Reset the zoomer
+    m_zoomer->setZoomBase(true);
 
     replot();
 }
@@ -132,4 +149,38 @@ void DataPlot::addPoints(const QBitArray& data)
     }
 
     replot();
+}
+
+/**
+ * Get the current data points displayed in the plot
+ *
+ * @return x-y points in the displayed window
+ */
+QVector<QPointF> DataPlot::getDisplayedPoints() const
+{
+    // Get x-position of current displayed points
+    double startPosition = m_zoomer->zoomRect().bottomLeft().x();
+    double endPosition = m_zoomer->zoomRect().bottomRight().x();
+
+    if (m_zoomer->zoomStack().size() > 1) { // If we're zoomed in
+        startPosition = m_zoomer->zoomRect().bottomLeft().x();
+        endPosition = m_zoomer->zoomRect().bottomRight().x();
+    }
+    else if (m_xPoints.size()) {
+        startPosition = m_xPoints[0];
+        endPosition = m_xPoints[m_xPoints.size() - 1];
+
+    }
+
+    // Loop through all avaliable points and add them if they are within range
+    QVector<QPointF> points;
+    for (int i = 0; i < m_xPoints.size(); ++i) {
+        double x = m_xPoints.at(i);
+        if (x >= startPosition && x <= endPosition)
+        {
+            double y = m_yPoints.at(i);
+            points.append(QPointF(x, y));
+        }
+    }
+    return points;
 }
